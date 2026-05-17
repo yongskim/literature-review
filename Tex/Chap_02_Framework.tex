@@ -6,32 +6,71 @@
     \centering
     \resizebox{\textwidth}{!}{%
     \begin{tikzpicture}[
-        x=1cm,
-        y=1cm,
-        pstep/.style={rounded corners, draw, align=center, text width=2.25cm, minimum height=0.95cm, fill=cyan!8},
-        store/.style={rounded corners, draw, align=center, text width=2.1cm, minimum height=1.05cm, fill=yellow!10},
-        arrow/.style={-Latex, thick}
+        font=\small,
+        node distance=1.0cm,
+        stage/.style={
+            rounded corners,
+            draw,
+            thick,
+            align=center,
+            text width=3.1cm,
+            minimum height=2.1cm,
+            fill=blue!10
+        },
+        verify/.style={
+            rounded corners,
+            draw,
+            thick,
+            align=center,
+            text width=3.1cm,
+            minimum height=0.9cm,
+            fill=blue!10
+        },
+        arrow/.style={-Latex, thick},
+        dashedarrow/.style={-Latex, thick, dashed}
     ]
-        \node[pstep] (s1) at (0, 0) {日志采集\\Audit\\ETW/EDR};
-        \node[pstep] (s2) at (3, 0) {规范化\\实体归并};
-        \node[pstep] (s3) at (6, 0) {溯源图构建\\节点/边/时间};
-        \node[pstep] (s4) at (9, 0) {缩减与存储\\窗口/压缩/索引};
-        \node[pstep] (s5) at (9, -2.25) {检测模型\\规则/异常\\GNN/LLM};
-        \node[pstep] (s6) at (6, -2.25) {告警归因\\节点/路径/子图};
-        \node[pstep] (s7) at (3, -2.25) {调查响应\\解释/溯源/处置};
-        \node[store] (kb) at (0, -2.25) {外部知识\\CTI/良性库};
+
+        % 主流程节点
+        \node[stage] (s1) {
+            \textbf{日志采集与规范化}\\[0.35cm]
+            系统事件\\
+            采集/清洗/规范化
+        };
+
+        \node[stage, right=1.0cm of s1] (s2) {
+            \textbf{图规模控制}\\[0.35cm]
+            缩减/压缩\\
+            窗口划分
+        };
+
+        \node[stage, right=1.0cm of s2] (s3) {
+            \textbf{异常评分}\\[0.35cm]
+            节点/边/路径\\
+            子图/整图
+        };
+
+        \node[stage, right=1.0cm of s3] (s4) {
+            \textbf{告警解释与溯源}\\[0.35cm]
+            攻击路径\\
+            根因节点\\
+            影响范围
+        };
+
+        % 验证节点
+        \node[verify, below=1.0cm of s4] (v) {
+            供安全分析员验证
+        };
+
+        % 箭头
         \draw[arrow] (s1) -- (s2);
         \draw[arrow] (s2) -- (s3);
         \draw[arrow] (s3) -- (s4);
-        \draw[arrow] (s4) -- (s5);
-        \draw[arrow] (s5) -- (s6);
-        \draw[arrow] (s6) -- (s7);
-        \draw[arrow, dashed] (kb) -- (s5);
-        \draw[arrow, dashed] (kb) -- (s6);
+        \draw[dashedarrow] (s4) -- (v);
+
     \end{tikzpicture}%
     }
-    \caption{典型PIDS系统流水线}
-    \label{fig:pids-pipeline}
+    \caption{典型PIDS流水线}
+    \label{fig:pids_pipeline}
 \end{figure}
 
 不同方法的关键差异在于检测粒度和先验假设。规则型系统依赖攻击模式、威胁情报或领域查询语言，优点是可解释、实时性强，缺点是难以发现未知攻击。异常型系统学习正常行为分布，适合零日和变体攻击，但容易把环境变化误判为攻击。学习型系统进一步利用GNN、Transformer、自监督编码器或强化学习学习图结构和时间语义，在精度上取得显著提升，却带来训练成本、泛化能力和解释性问题。近期LLM方法试图在告警之后引入外部知识库、威胁情报和自然语言解释，以降低人工调查成本。
@@ -40,6 +79,7 @@
     \centering
     \resizebox{\textwidth}{!}{%
     \begin{tikzpicture}[
+        font=\small,
         node distance=0.72cm,
         root/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=0.8cm, fill=blue!10},
         branch/.style={rounded corners, draw, align=center, text width=2.6cm, minimum height=0.8cm, fill=green!8},
