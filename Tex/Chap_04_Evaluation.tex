@@ -1,0 +1,56 @@
+\chapter{评测指标与Benchmark}
+
+PIDS评测常见指标包括Precision、Recall、F1、AUC、FPR和MCC。对于节点级方法，还需要统计TP、FP、TN、FN对应的节点数量；对于路径或子图级方法，需要评估攻击覆盖率、无关节点比例和路径完整性；对于在线系统，还需要报告吞吐、延迟、内存、CPU和训练/测试时间。Bilot等指出，很多论文报告的高性能来自不一致的评测设定，例如阈值选择、测试数据泄露、标签粒度不同或将攻击后代节点全部视为恶意，从而夸大了实际检测能力\citep{bilot2025simpler}。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.55cm,
+        axis/.style={rounded corners, draw, align=center, text width=3.2cm, minimum height=0.85cm, fill=blue!8},
+        item/.style={rounded corners, draw, align=center, text width=3.2cm, minimum height=0.72cm, fill=gray!8},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[axis] (a1) {检测有效性};
+        \node[axis, right=of a1] (a2) {归因质量};
+        \node[axis, right=of a2] (a3) {部署可用性};
+        \node[item, below=of a1] (b1) {Precision / Recall / F1};
+        \node[item, below=of b1] (b2) {FPR / AUC / MCC};
+        \node[item, below=of a2] (b3) {恶意节点覆盖率};
+        \node[item, below=of b3] (b4) {无关节点比例 / 路径完整性};
+        \node[item, below=of a3] (b5) {吞吐 / 延迟 / 内存};
+        \node[item, below=of b5] (b6) {跨数据集泛化 / 在线稳定性};
+        \draw[arrow] (a1) -- (b1);
+        \draw[arrow] (b1) -- (b2);
+        \draw[arrow] (a2) -- (b3);
+        \draw[arrow] (b3) -- (b4);
+        \draw[arrow] (a3) -- (b5);
+        \draw[arrow] (b5) -- (b6);
+    \end{tikzpicture}%
+    }
+    \caption{PIDS评测维度：准确检测、可调查告警与可部署系统}
+    \label{fig:evaluation-matrix}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{常用数据集与适用场景}
+    \label{tab:datasets}
+    \renewcommand{\arraystretch}{1.18}
+    \begin{tabularx}{\textwidth}{p{2.6cm} p{2.4cm} X X}
+        \toprule
+        数据集 & 主要系统/平台 & 常见用途 & 局限 \\
+        \midrule
+        DARPA TC E3/E5 & Linux, FreeBSD, Windows等 & PIDS最常用benchmark，包含Trace、Theia、Cadets、FiveDirections等子集。 & 攻击脚本化、时间跨度有限，标签和文档粒度不足。 \\
+        DARPA OpTC & Windows 10企业环境 & 用于评估大规模Windows审计日志和多主机场景。 & 数据极大，处理门槛高，攻击占比极低。 \\
+        StreamSpot & 信息流图 & 常用于流式图异常检测和图级基线比较。 & 场景较简单，与现代APT差距较大。 \\
+        Unicorn数据集 & 企业级端点模拟 & 用于评估长期APT和供应链式场景。 & 规模和多样性仍不足以覆盖真实企业环境。 \\
+        下一代数据集工作\citep{nextgendatasets2026} & 自动化攻击仿真 & 面向新型APT技术、细粒度标签和更完整攻击链。 & 仍处于建设阶段，需要社区共同验证。 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+从benchmark角度看，DARPA TC仍是主流，但它也逐渐成为瓶颈。许多系统都在同一批数据上迭代，容易出现对特定数据集过拟合的现象。OpTC提供了更接近企业规模的Windows日志，但数据量和标注复杂度使复现实验门槛显著提高。NextGenDatasets等2026年工作明确指出，现有数据集存在攻击技术过时、时间尺度短、攻击链碎片化和标签不清晰等问题，并尝试通过自动化攻击仿真构建更大规模、更细粒度标注的新数据集\citep{nextgendatasets2026}。因此，未来PIDS的评测应同时包含旧benchmark上的可比性和新场景上的泛化性。
+
+评测设计还应避免把“检测阶段”和“调查阶段”混为一谈。若系统输出的是异常节点，则应以节点标签评估检测能力；若系统输出的是攻击路径或子图，则应同时统计攻击覆盖率和无关节点比例；若系统目标是在线检测，则必须报告流式日志吞吐和告警延迟。只有在统一粒度和统一数据划分下比较，才能判断复杂模型是否真正优于简单基线。

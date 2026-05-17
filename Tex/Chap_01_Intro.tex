@@ -1,0 +1,42 @@
+\chapter{引言}
+
+高级持续性威胁（advanced persistent threat, APT）通常不是单个恶意程序或单条异常日志，而是由初始入侵、权限维持、横向移动、凭据窃取、数据收集和外传等阶段组合而成的长期攻击过程。传统主机入侵检测常依赖签名、单点异常或短窗口序列特征，能够发现已知恶意样本，却难以回答三个更重要的问题：攻击从哪里开始、经过了哪些实体、造成了哪些影响。系统溯源图（system provenance graph）为这一问题提供了结构化表达：进程、文件、套接字、注册表项等系统实体被建模为节点，读、写、执行、连接等事件被建模为带时间和类型的有向边，从而将审计日志转换为可追踪的信息流和控制流。
+
+基于溯源图的入侵检测系统（provenance-based intrusion detection systems, PIDS）因此成为APT检测的重要方向。综述性研究通常将该方向分解为数据采集、图构建与缩减、图存储与查询、威胁检测、威胁狩猎和取证分析等环节\citep{zipperle2023survey,leng2022review}。随着机器学习和图学习方法进入该领域，研究重点又从规则匹配和统计异常转向节点级检测、自监督表示学习、在线推理和可解释归因\citep{li2025intelligent}。近两年，大语言模型（large language models, LLMs）进一步把外部威胁情报、自然语言攻击报告和溯源图行为解释纳入检测流程，形成了LLM+RAG、图语言对比学习和智能取证代理等新分支\citep{omniseq2025,provseek2025,aptcglp2025}。
+
+本文围绕“基于溯源图的威胁检测”展开综述。与只罗列方法不同，本文希望建立一条可理解的演进线索：早期方法强调“能否长期记录并发现异常”，中期方法强调“能否在大图上准确定位恶意节点”，近期方法强调“能否在线运行、降低人工分析成本，并解释攻击语义”。为此，本文参考已有综述对采集、缩减、检测、狩猎与取证的体系划分\citep{zipperle2023survey,leng2022review,li2025intelligent}，并结合近期公开论文清单和原始论文页面补充前沿趋势\citep{xythink2026papers}，从检测范式、评测体系和未解决问题三个层面进行梳理。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.9cm,
+        block/.style={rounded corners, draw, align=center, text width=2.55cm, minimum height=0.9cm, fill=blue!8},
+        threat/.style={rounded corners, draw, align=center, text width=2.55cm, minimum height=0.9cm, fill=red!8},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[threat] (a1) {初始入侵\\漏洞/钓鱼};
+        \node[threat, right=of a1] (a2) {权限维持\\持久化};
+        \node[threat, right=of a2] (a3) {横向移动\\凭据滥用};
+        \node[threat, right=of a3] (a4) {数据收集\\外传};
+        \node[block, below=1.05cm of a1] (p1) {系统实体\\进程/文件/套接字};
+        \node[block, right=of p1] (p2) {因果事件\\读/写/执行/连接};
+        \node[block, right=of p2] (p3) {溯源图\\动态图/异构图};
+        \node[block, right=of p3] (p4) {检测与取证\\告警/路径/影响};
+        \draw[arrow] (a1) -- (a2);
+        \draw[arrow] (a2) -- (a3);
+        \draw[arrow] (a3) -- (a4);
+        \draw[arrow] (p1) -- (p2);
+        \draw[arrow] (p2) -- (p3);
+        \draw[arrow] (p3) -- (p4);
+        \draw[arrow, dashed] (a1) -- (p1);
+        \draw[arrow, dashed] (a2) -- (p2);
+        \draw[arrow, dashed] (a3) -- (p3);
+        \draw[arrow, dashed] (a4) -- (p4);
+    \end{tikzpicture}%
+    }
+    \caption{APT攻击链与溯源图分析视角}
+    \label{fig:apt-provenance}
+\end{figure}
+
+本文后续结构如下。第二章介绍溯源图检测任务和PIDS系统框架；第三章按照方法演进比较规则、异常、图学习、LLM和工程化系统；第四章总结评测指标与benchmark；第五章讨论开放问题和未来研究方向；第六章给出结论。

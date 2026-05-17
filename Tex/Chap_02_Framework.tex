@@ -1,0 +1,73 @@
+\chapter{溯源图检测任务与系统框架}
+
+溯源图检测任务的输入通常来自Linux Audit、ETW、DTrace、CamFlow或EDR系统采集的审计事件。事件经过解析、去重、实体归并和因果方向恢复后，形成随时间增长的动态图。一个典型PIDS流水线包括四步：首先采集系统事件并进行规范化；其次通过缩减、压缩或窗口划分控制图规模；然后对节点、边、路径、子图或整图进行异常评分；最后将告警转化为安全分析员可以验证的攻击路径、根因节点和影响范围。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.85cm,
+        pstep/.style={rounded corners, draw, align=center, text width=2.25cm, minimum height=0.95cm, fill=cyan!8},
+        store/.style={cylinder, shape border rotate=90, draw, align=center, text width=1.85cm, minimum height=0.95cm, fill=yellow!10},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[pstep] (s1) {日志采集\\Audit\\ETW/EDR};
+        \node[pstep, right=of s1] (s2) {规范化\\实体归并};
+        \node[pstep, right=of s2] (s3) {溯源图构建\\节点/边/时间};
+        \node[pstep, right=of s3] (s4) {缩减与存储\\窗口/压缩/索引};
+        \node[pstep, below=1.0cm of s4] (s5) {检测模型\\规则/异常\\GNN/LLM};
+        \node[pstep, left=of s5] (s6) {告警归因\\节点/路径/子图};
+        \node[pstep, left=of s6] (s7) {调查响应\\解释/溯源/处置};
+        \node[store, below=1.0cm of s2] (kb) {外部知识\\CTI/良性库};
+        \draw[arrow] (s1) -- (s2);
+        \draw[arrow] (s2) -- (s3);
+        \draw[arrow] (s3) -- (s4);
+        \draw[arrow] (s4) -- (s5);
+        \draw[arrow] (s5) -- (s6);
+        \draw[arrow] (s6) -- (s7);
+        \draw[arrow, dashed] (kb) -- (s5);
+        \draw[arrow, dashed] (kb) -- (s6);
+    \end{tikzpicture}%
+    }
+    \caption{典型PIDS系统流水线}
+    \label{fig:pids-pipeline}
+\end{figure}
+
+不同方法的关键差异在于检测粒度和先验假设。规则型系统依赖攻击模式、威胁情报或领域查询语言，优点是可解释、实时性强，缺点是难以发现未知攻击。异常型系统学习正常行为分布，适合零日和变体攻击，但容易把环境变化误判为攻击。学习型系统进一步利用GNN、Transformer、自监督编码器或强化学习学习图结构和时间语义，在精度上取得显著提升，却带来训练成本、泛化能力和解释性问题。近期LLM方法试图在告警之后引入外部知识库、威胁情报和自然语言解释，以降低人工调查成本。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.72cm,
+        root/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=0.8cm, fill=blue!10},
+        branch/.style={rounded corners, draw, align=center, text width=2.6cm, minimum height=0.8cm, fill=green!8},
+        leaf/.style={rounded corners, draw, align=center, text width=2.55cm, minimum height=0.72cm, fill=gray!8},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[root] (r) {基于溯源图的威胁检测};
+        \node[branch, below left=0.9cm and 4.0cm of r] (b1) {先验知识驱动};
+        \node[branch, below=0.9cm of r] (b2) {数据驱动};
+        \node[branch, below right=0.9cm and 4.0cm of r] (b3) {语义与工程驱动};
+        \node[leaf, below=of b1] (l1) {规则/标签传播};
+        \node[leaf, below=of l1] (l2) {图模式/查询语言};
+        \node[leaf, below=of b2] (l3) {统计异常/图草图};
+        \node[leaf, below=of l3] (l4) {GNN/自监督/RL};
+        \node[leaf, below=of b3] (l5) {LLM/RAG\\CTI};
+        \node[leaf, below=of l5] (l6) {EDR集成/在线系统};
+        \draw[arrow] (r) -- (b1);
+        \draw[arrow] (r) -- (b2);
+        \draw[arrow] (r) -- (b3);
+        \draw[arrow] (b1) -- (l1);
+        \draw[arrow] (l1) -- (l2);
+        \draw[arrow] (b2) -- (l3);
+        \draw[arrow] (l3) -- (l4);
+        \draw[arrow] (b3) -- (l5);
+        \draw[arrow] (l5) -- (l6);
+    \end{tikzpicture}%
+    }
+    \caption{PIDS方法分类视角}
+    \label{fig:taxonomy}
+\end{figure}
+
+从系统角度看，PIDS并不是单一检测器，而是一个从日志到证据的端到端分析链。Zipperle等强调采集、缩减、检测和benchmark共同决定系统可用性\citep{zipperle2023survey}；冷涛等进一步将威胁发现、威胁狩猎和取证分析区分为相互关联但目标不同的任务\citep{leng2022review}。因此，评价一个PIDS时，既要看检测指标，也要看它是否能提供可调查、可复现、可部署的证据链。

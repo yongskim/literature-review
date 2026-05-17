@@ -1,0 +1,49 @@
+\chapter{存在问题与研究展望}
+
+\section{误报、归因质量与人机协同}
+
+异常检测的核心难题是正常行为本身会变化。软件更新、用户习惯变化、业务迁移和系统配置调整都会改变溯源图分布，导致模型把概念漂移误判为攻击。METANOIA提出以终身学习缓解概念漂移，并通过伪边、可疑状态转移和路径级过滤减少误报\citep{metanoia2025}。这表明未来检测系统不应是一次训练后长期固定的模型，而应能在不学习恶意行为的前提下持续吸收新正常行为。
+
+同时，检测正确不等于调查可用。ORTHRUS和Bilot等工作的共同提醒是，研究需要从“是否命中攻击”扩展到“分析员需要付出多少努力”。一个可行方向是构造多层告警输出：第一层给出少量高置信异常节点，第二层给出从入口到影响点的紧凑攻击路径，第三层提供自然语言解释和证据链链接。LLM可以参与第三层解释，但必须由可验证的溯源查询结果约束，避免生成无法回溯的幻觉结论。
+
+\section{跨系统泛化与语义增强}
+
+不同操作系统、日志采集器和企业软件栈产生的实体类型、事件字段和命名习惯差异很大。仅依赖结构特征的GNN容易学习到数据集特有模式，而不是攻击语义。FLASH将文件路径、命令行和IP等语义属性纳入编码，APT-CGLP则尝试通过图语言对比预训练弥合CTI报告和溯源图之间的模态差距\citep{flash2024,aptcglp2025}。未来更可行的路线是“结构不变性+语义补全”：图结构负责表达因果关系，语义编码负责解释实体功能，跨域训练负责约束模型不要过度依赖单一平台特征。
+
+Auto-Prov把这一问题前移到图构建阶段：它用LLM从异构日志中自动抽取溯源边和实体功能属性，再把功能上下文嵌入图中\citep{autoprov2026}。这提示我们，PIDS未来的竞争点可能不只在检测器，而在端到端数据管线：从日志解析、实体规范化、功能语义补全、图缩减到检测解释，每一步都会影响最终质量。
+
+\section{面向未来的可能方案}
+
+结合上述脉络，本文认为一个值得探索的方案是“语义增强的持续学习PIDS”。其基本思路如下：首先，在数据层保留可验证的溯源因果边，同时对进程名、文件路径、命令行参数和网络端点进行功能语义编码；其次，在模型层采用自监督图表示学习获得基础编码，再引入增量学习机制适应概念漂移；再次，在告警层使用路径级归因指标约束输出规模，只保留与攻击因果链强相关的节点和边；最后，在解释层使用RAG式LLM读取威胁情报和本次告警证据，生成带引用证据的调查摘要。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.75cm,
+        layer/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=0.82cm, fill=blue!8},
+        risk/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=0.82cm, fill=red!8},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[layer] (d1) {可验证数据层\\因果边/实体语义};
+        \node[layer, right=of d1] (d2) {持续学习层\\自监督/增量更新};
+        \node[layer, right=of d2] (d3) {归因约束层\\路径/子图/证据};
+        \node[layer, right=of d3] (d4) {解释协同层\\RAG/报告/处置};
+        \node[risk, below=0.9cm of d1] (r1) {日志异构};
+        \node[risk, below=0.9cm of d2] (r2) {概念漂移};
+        \node[risk, below=0.9cm of d3] (r3) {告警疲劳};
+        \node[risk, below=0.9cm of d4] (r4) {LLM幻觉};
+        \draw[arrow] (d1) -- (d2);
+        \draw[arrow] (d2) -- (d3);
+        \draw[arrow] (d3) -- (d4);
+        \draw[arrow, dashed] (r1) -- (d1);
+        \draw[arrow, dashed] (r2) -- (d2);
+        \draw[arrow, dashed] (r3) -- (d3);
+        \draw[arrow, dashed] (r4) -- (d4);
+    \end{tikzpicture}%
+    }
+    \caption{面向未来的语义增强持续学习PIDS路线}
+    \label{fig:future-roadmap}
+\end{figure}
+
+这一方案的关键不是让LLM直接判断“是否攻击”，而是让LLM在受约束的证据空间中完成语义补全和报告生成。检测决策仍应由可复现实验验证的图模型、统计模型或规则模型承担。这样既能利用LLM的语义理解能力，又能避免把安全决策完全交给不稳定的黑箱推理。评价时应同时报告检测指标、归因质量、人工检查节点数、在线延迟和跨数据集泛化性能。

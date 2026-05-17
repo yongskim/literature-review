@@ -1,0 +1,94 @@
+\chapter{代表性方法演进}
+
+\section{总体演进脉络}
+
+基于溯源图的威胁检测方法经历了从规则、统计异常、图学习到语义增强和工程部署的演进。早期方法强调能否把长时间系统行为记录下来并匹配可疑因果链；中期方法强调如何在大规模动态图中定位恶意节点或子图；近期方法则进一步关注在线检测、告警归因质量、外部威胁情报和自然语言解释。
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.15cm,
+        stage/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=1.05cm, fill=blue!8},
+        trend/.style={rounded corners, draw, align=center, text width=3.0cm, minimum height=1.05cm, fill=green!8},
+        arrow/.style={-Latex, thick}
+    ]
+        \node[stage] (rule) {规则/图匹配\\SLEUTH, HOLMES};
+        \node[stage, right=of rule] (stat) {统计异常/图草图\\Unicorn};
+        \node[stage, right=of stat] (gnn) {节点级GNN\\THREATRACE};
+        \node[stage, below=of gnn] (self) {自监督与表示学习\\MAGIC, FLASH};
+        \node[stage, left=of self] (online) {在线细粒度检测\\KAIROS, NODLINK};
+        \node[trend, left=of online] (llm) {语义增强与LLM\\OMNISEC, OCR-APT};
+        \node[trend, below=of online] (future) {新趋势\\RL, EDR, 数据集更新};
+        \draw[arrow] (rule) -- (stat);
+        \draw[arrow] (stat) -- (gnn);
+        \draw[arrow] (gnn) -- (self);
+        \draw[arrow] (self) -- (online);
+        \draw[arrow] (online) -- (llm);
+        \draw[arrow] (llm) -- (future);
+    \end{tikzpicture}%
+    }
+    \caption{基于溯源图的威胁检测方法演进脉络}
+    \label{fig:evolution}
+\end{figure}
+
+\section{从规则匹配到统计异常}
+
+早期PIDS的直接目标是利用溯源图重建攻击因果链。基于规则或查询的方法把攻击知识编码为标签传播、图模式或领域语言查询，能够较快定位已知战术技术过程（tactics, techniques and procedures, TTPs）。中文综述将这类方法归纳为基于规则、基于异常和基于学习的威胁检测，并指出规则类方法适合威胁狩猎和取证，但依赖专家知识\citep{leng2022review}。Zipperle等则强调，PIDS除了检测算法外，还必须面对采集开销、图缩减、图存储、查询和benchmark缺失等系统问题\citep{zipperle2023survey}。
+
+Unicorn是统计异常阶段的重要代表。它面向APT“低速慢行”的特点，用图草图和固定大小的长期结构摘要表示系统行为，在不保存完整图的情况下支持运行时异常检测\citep{unicorn2020}。这类方法的价值在于证明长时间上下文确实有助于区分隐蔽攻击与正常行为；局限在于检测粒度偏粗，通常只能给出图级或粗粒度告警，后续攻击归因仍然依赖人工追踪。
+
+\section{节点级图学习与归因质量}
+
+随着GNN进入PIDS，研究开始从“整图异常”转向“节点级恶意实体定位”。THREATRACE把GraphSAGE用于溯源图节点表示学习，以无先验模式的方式识别异常实体，并强调实时监控和早期检测\citep{threatrace2022}。它解决了图级方法对少量恶意节点不敏感的问题，但仍主要依赖局部结构和系统调用分布，面对语义相近但安全含义不同的行为时可能产生误报。
+
+KAIROS进一步从系统设计维度审视PIDS，提出实践系统应同时满足跨应用边界检测、攻击无关性、及时性和高效调查四个维度，并使用时序因果GNN进行检测与调查\citep{kairos2024}。ORTHRUS则把“归因质量”（quality of attribution, QoA）作为核心指标，指出接近完美的检测率并不等于可部署；如果告警包含大量与攻击无关的节点，安全分析员仍会陷入告警疲劳\citep{orthrus2025}。这一转向很关键：PIDS的评价对象不应只是模型输出的准确率，还应包括人工调查所需检查的节点数、攻击路径紧凑性和根因解释质量。
+
+\section{自监督表示学习与在线检测}
+
+MAGIC代表了自监督图表示学习路线。它通过掩码图表示学习缓解攻击样本稀缺问题，在只依赖正常数据或有限标签的情况下学习溯源图语义\citep{magic2024}。FLASH则指出现有方法常忽略命令行、文件路径、进程名、IP地址等语义属性，以及事件的时间因果顺序，因此结合Word2Vec语义编码和GNN上下文编码，并用嵌入缓存降低运行时推理开销\citep{flash2024}。这说明图结构本身不是全部，系统实体名称、路径和命令参数往往承载关键安全语义。
+
+在线检测方向关注另一个实际问题：审计日志持续流入，溯源图规模巨大，如果每次都在全图上推理就难以部署。NODLINK将在线细粒度检测建模为在线Steiner Tree问题，利用内存缓存和近似子图搜索减少需要分析的区域，从而在开放世界场景下定位APT活动\citep{nodlink2024}。这类方法的共同趋势是用结构缩减、窗口划分、缓存或近似搜索在准确率和延迟之间折中。
+
+\section{LLM辅助、强化学习与工程化落地}
+
+LLM方法并不是简单替换检测模型，而是在三个位置补足传统PIDS短板。第一，OMNISEC使用无损缩减去除冗余信息流，构建良性行为知识库和威胁情报知识库，再用RAG提示LLM判断异常节点是否是真实攻击，并重建攻击图\citep{omniseq2025}。第二，OCR-APT结合子图异常检测和LLM，把低层审计日志转化为较完整的APT故事，提升取证叙事能力\citep{ocrapt2025}。第三，ProvSEEK和SHIELD等外部前沿工作将RAG、CoT和多智能体机制引入溯源取证，目标是生成可验证的调查摘要并降低误报解释成本\citep{provseek2025,shield2025}。
+
+强化学习和工程化是另一条新线。Slot将检测过程建模为图强化学习，让策略在动态溯源图中学习自适应检测动作\citep{slot2025}。SYSARMOR则把溯源分析纳入EDR实践，通过微服务架构、实时流处理和异步检测引擎组合Falco规则、NODLINK和KNOWHOW，展示了PIDS从论文原型走向企业部署的路径\citep{sysarmor2026}。Auto-Prov进一步把LLM用于异构日志到功能嵌入溯源图的自动构建，说明未来改进点不只在检测模型，也在图构建和语义补全阶段\citep{autoprov2026}。
+
+\section{代表性系统比较}
+
+已有综述为本文提供了基本组织框架：Zipperle等从数据采集、图缩减、入侵检测和benchmark角度构建PIDS分类\citep{zipperle2023survey}；冷涛等将系统溯源图研究划分为威胁发现、威胁狩猎和取证分析\citep{leng2022review}；李振源等进一步聚焦机器学习在智能溯源分析中的准确率、效率、鲁棒性和解释性问题\citep{li2025intelligent}。因此，表\ref{tab:papers}只比较具体检测、狩猎、取证或工程系统，不将综述性论文放入方法对比。可以看到，方法演进不是单纯从浅层模型到深层模型，而是围绕三个矛盾反复推进：检测未知攻击与控制误报之间的矛盾，大规模图分析与实时性之间的矛盾，高性能指标与可调查告警之间的矛盾。
+
+\begin{table}[htbp]
+    \centering
+    \scriptsize
+    \caption{代表性系统的一句话比较}
+    \label{tab:papers}
+    \renewcommand{\arraystretch}{1.05}
+    \begin{tabularx}{\textwidth}{p{1.85cm} p{1.75cm} X X}
+        \toprule
+        论文 & 类型 & 核心动机与方法 & 主要启示 \\
+        \midrule
+        Unicorn & 统计异常 & 用图草图摘要长期系统行为，实现运行时APT异常检测。 & 长期上下文有价值，但图级告警归因能力有限。 \\
+        THREATRACE & 节点级GNN & 用GraphSAGE学习实体角色，检测少量威胁节点。 & 检测粒度从图级推进到节点级。 \\
+        KAIROS & 实用PIDS & 用时序因果GNN兼顾检测和调查。 & 实用系统需同时考虑范围、未知攻击、及时性和调查效率。 \\
+        NODLINK & 在线检测 & 将细粒度APT检测转化为在线Steiner Tree近似搜索。 & 在线场景需要把全图问题压缩为局部可处理子图。 \\
+        MAGIC & 自监督学习 & 用掩码图表示学习缓解攻击样本不足。 & 自监督预训练是减少标签依赖的重要方向。 \\
+        FLASH & 语义+GNN & 融合Word2Vec语义编码、GNN结构编码和嵌入缓存。 & 文件路径、命令行和时间顺序是降低误报的关键语义。 \\
+        ORTHRUS & 高质量归因 & 提出QoA视角，减少人工需要检查的无关节点。 & 告警质量应和准确率一样成为核心指标。 \\
+        OMNISEC & LLM+RAG & 用良性行为库和威胁情报库辅助LLM判断异常行为。 & LLM适合作为语义判别和攻击链重建层。 \\
+        OCR-APT & 子图异常+LLM & 先发现异常子图，再用LLM重建APT故事。 & 取证叙事是检测结果走向分析员的桥梁。 \\
+        Slot & 强化学习 & 用图强化学习进行自适应APT检测。 & 动态策略可用于应对攻击过程和环境变化。 \\
+        ProvSEEK & LLM Agent & 结合RAG、CoT和多代理机制进行溯源取证与检测。 & 说明LLM更适合受证据约束的调查推理。 \\
+        SHIELD & 异常+LLM解释 & 将统计异常、图关联和LLM上下文分析结合。 & 解释性和误报过滤成为LLM路线的核心价值。 \\
+        Auto-Prov & 自动构图 & 用LLM从异构日志自动构建功能嵌入溯源图。 & 检测质量前移到日志解析和图构建阶段。 \\
+        APT-CGLP & 图语言预训练 & 用对比图语言预训练匹配溯源图和CTI报告。 & 威胁狩猎开始从图匹配走向跨模态语义匹配。 \\
+        ProHunter & 威胁狩猎 & 用语义压缩、威胁图采样和表示增强提高狩猎效率。 & 长期图存储和CTI语义对齐是工程化关键。 \\
+        METANOIA & 终身学习 & 用增量学习缓解概念漂移并重建攻击场景。 & 持续运行环境必须处理正常行为演化。 \\
+        SYSARMOR & EDR集成 & 以微服务架构将规则检测和溯源异常检测接入EDR。 & PIDS正在从原型算法走向企业在线部署。 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+从表中可以进一步抽象出三种技术路线。第一类是结构驱动路线，代表为Unicorn、NODLINK和ProHunter，关注如何在大规模动态溯源图中保留关键因果关系并快速搜索可疑子图\citep{prohunter2026}。第二类是表示学习路线，代表为THREATRACE、KAIROS、MAGIC、FLASH和ORTHRUS，关注如何把节点属性、邻域结构和时间顺序编码成可学习表示。第三类是语义增强路线，代表为OMNISEC、OCR-APT、ProvSEEK、SHIELD、Auto-Prov和APT-CGLP，关注如何把威胁情报、自然语言报告和LLM推理接入检测与调查流程\citep{provseek2025,shield2025,aptcglp2025,autoprov2026}。
