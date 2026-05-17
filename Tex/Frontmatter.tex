@@ -17,15 +17,15 @@
 \setcounter{page}{1}% 开始页码
 \pagenumbering{Roman}% 页码符号
 
-本文是中国科学院大学学位论文模板ucasthesis的使用说明文档。主要内容为介绍\LaTeX{}文档类ucasthesis的用法，以及如何使用\LaTeX{}快速高效地撰写学位论文。
+高级持续性威胁（APT）具有长期潜伏、跨阶段组合和低噪声执行等特点，传统基于单点告警或短序列特征的入侵检测方法难以刻画完整攻击链。系统溯源图将进程、文件、套接字等系统实体及其因果交互统一建模，为威胁检测、威胁狩猎和取证分析提供了可追踪的全局视图。本文围绕“基于溯源图的威胁检测”展开综述，在系统调研14篇本地选定论文的基础上，结合近年公开论文清单和前沿工作，梳理该方向从规则和图匹配、统计异常检测、图表示学习、在线检测，到大语言模型辅助分析、强化学习和工程化落地的演进脉络。本文进一步比较代表性方法在建模粒度、学习范式、评测数据集、检测指标、实时性和可解释性方面的差异，总结DARPA TC、OpTC、StreamSpot和Unicorn等常用benchmark的适用范围。最后，本文讨论当前研究在误报控制、跨系统泛化、概念漂移、数据集老化、告警归因质量和LLM可靠性方面的挑战，并提出面向语义增强、持续学习和人机协同调查的研究思路。
 
-\keywords{中国科学院大学，学位论文，\LaTeX{}模板}% 中文关键词
+\keywords{溯源图，高级持续性威胁，入侵检测，图神经网络，大语言模型}% 中文关键词
 %-
 %-> 英文摘要
 %-
 \intobmk\chapter*{Abstract}% 显示在书签但不显示在目录
 
-This paper is a help documentation for the \LaTeX{} class ucasthesis, which is  a thesis template for the University of Chinese Academy of Sciences. The main content is about how to use the ucasthesis, as well as how to write thesis efficiently by using \LaTeX{}.
+Advanced Persistent Threats (APTs) are stealthy, long-lived, and multi-stage attacks. Conventional intrusion detection methods based on isolated alerts or short event sequences often fail to model complete attack chains. System provenance graphs represent processes, files, sockets, and their causal interactions in a unified graph, providing a global and traceable view for threat detection, hunting, and forensic analysis. This survey reviews threat detection based on provenance graphs. Starting from fourteen locally selected papers and complemented by recent online paper lists and frontier works, it summarizes the evolution from rule-based graph matching, statistical anomaly detection, graph representation learning, and online detection to LLM-assisted analysis, reinforcement learning, and engineering deployment. The survey compares representative systems in terms of modeling granularity, learning paradigm, datasets, metrics, timeliness, and interpretability, and discusses commonly used benchmarks such as DARPA TC, OpTC, StreamSpot, and Unicorn. Finally, it analyzes open challenges including false alarms, cross-system generalization, concept drift, outdated datasets, attribution quality, and LLM reliability, and suggests future directions toward semantic enrichment, continual learning, and human-in-the-loop investigation.
 
-\KEYWORDS{University of Chinese Academy of Sciences (UCAS), Thesis, \LaTeX{} Template}% 英文关键词
+\KEYWORDS{provenance graph, advanced persistent threat, intrusion detection, graph neural network, large language model}% 英文关键词
 %---------------------------------------------------------------------------%
