@@ -6,19 +6,20 @@
     \centering
     \resizebox{\textwidth}{!}{%
     \begin{tikzpicture}[
-        node distance=0.85cm,
+        x=1cm,
+        y=1cm,
         pstep/.style={rounded corners, draw, align=center, text width=2.25cm, minimum height=0.95cm, fill=cyan!8},
-        store/.style={cylinder, shape border rotate=90, draw, align=center, text width=1.85cm, minimum height=0.95cm, fill=yellow!10},
+        store/.style={rounded corners, draw, align=center, text width=2.1cm, minimum height=1.05cm, fill=yellow!10},
         arrow/.style={-Latex, thick}
     ]
-        \node[pstep] (s1) {日志采集\\Audit\\ETW/EDR};
-        \node[pstep, right=of s1] (s2) {规范化\\实体归并};
-        \node[pstep, right=of s2] (s3) {溯源图构建\\节点/边/时间};
-        \node[pstep, right=of s3] (s4) {缩减与存储\\窗口/压缩/索引};
-        \node[pstep, below=1.0cm of s4] (s5) {检测模型\\规则/异常\\GNN/LLM};
-        \node[pstep, left=of s5] (s6) {告警归因\\节点/路径/子图};
-        \node[pstep, left=of s6] (s7) {调查响应\\解释/溯源/处置};
-        \node[store, below=1.0cm of s2] (kb) {外部知识\\CTI/良性库};
+        \node[pstep] (s1) at (0, 0) {日志采集\\Audit\\ETW/EDR};
+        \node[pstep] (s2) at (3, 0) {规范化\\实体归并};
+        \node[pstep] (s3) at (6, 0) {溯源图构建\\节点/边/时间};
+        \node[pstep] (s4) at (9, 0) {缩减与存储\\窗口/压缩/索引};
+        \node[pstep] (s5) at (9, -2.25) {检测模型\\规则/异常\\GNN/LLM};
+        \node[pstep] (s6) at (6, -2.25) {告警归因\\节点/路径/子图};
+        \node[pstep] (s7) at (3, -2.25) {调查响应\\解释/溯源/处置};
+        \node[store] (kb) at (0, -2.25) {外部知识\\CTI/良性库};
         \draw[arrow] (s1) -- (s2);
         \draw[arrow] (s2) -- (s3);
         \draw[arrow] (s3) -- (s4);
